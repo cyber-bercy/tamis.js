@@ -11,6 +11,7 @@ const CommonWords ={
     "zxcvbn": 6,
     "12345678": 8,
     "123456": 6,
+    "314159": 6,
     "0000": 4,
     "5555": 4,
     "1234": 4,
@@ -32,6 +33,10 @@ const CommonWords ={
     "admin" : 5,
     "administrateur": 14,
     "administrator": 13,
+    "default": 7,
+    "guest": 5,
+    "password": 8,
+    "prod": 4,
     "tomcat": 6,
     // mois
     "janvier": 7,
@@ -74,11 +79,12 @@ const CommonWords ={
     // personnages, planètes ? utilité pas garentie par rapport à matrice co-occurence
     // dates, codes postaux, numéro de tél ? utilité pas garantie par rapport à matrice co-occurence
 }
-const MinLengthCommonWords = 3
+const MinComponentsLength = 3
 const BitsCommonWords = Math.log2(Object.keys(CommonWords).length);
 const BitsChar = Math.log2(26);
 const BitsNum = Math.log2(10);
 const BitsAlt = Math.log2(38);
+const BitsNumID = 2.0;
 
 
 function FrenchLowerCase(s) {
@@ -100,45 +106,96 @@ function Toogle(s) {
     return r;
 }
 
+function Delta(s1, s2){
+    var l = s1.length, delta = 0;
+   
+    for (i=0; i < l; i++) {
+        if (s1[i] != s2[i]) {
+            delta++;
+//            console.log("Delta: ", s1[i], delta);
+        }
+    }
+    return delta;
+}
+
 function CheckCommonWords(s) {
     if (CommonWords[s]) {
-        console.log("ALERTE : ", s, " présent dans le dictionnaire.");
+        console.log("CommonWords: ", s, " présent dans le dictionnaire.");
         return true;
     }
     return false;
 }
 
+const NumCharset = "0123456789";
+function FirstNum(s) {
+    var i=0, l = s.length;
+    while ( i<l && !NumCharset.includes(s[i]) ) {
+        i++;
+    }
+    if ( i == s.length) {
+        return -1;
+    }
+//    console.log("FirstNum: ", s, i);
+    return i;
+}
+
+const IdCharset = "0123456789.-/: ";
+function LastId(s) {
+    var i=0, l = s.length;
+    while ( i<l && IdCharset.includes(s[i]) ) {
+        i++;
+    }
+//    console.log("LastId: ", s, i);
+    return i; 
+}
+
 
 // EvalMdp essaie de trouver la transformation qui minimise l'entropie.
 function EvalTmdp(mdp) {
-    var s = FrenchLowerCase(mdp);
-    var r = RawEvalMdp(s); 
+    var lower = FrenchLowerCase(mdp);
+    var r = RawEvalMdp(lower); 
 
-    var toogled = Toogle(s);
-    if ( toogled != s ) {
-        var v = EvalTmdp(toogled);
+    var toogled = Toogle(lower);
+    if ( toogled != lower ) {
+        var v = EvalTmdp(toogled) + Delta(toogled, lower);
         if ( v < r ) {
             r = v;
             console.log("better toogled: ", toogled);
         }
     }
 
-    var l = s.length
-    for (var m=MinLengthCommonWords; m <= l; m++){
+    var l = lower.length;
+    for (var m=MinComponentsLength; m <= l; m++){
         for (var i=0; i+m <= l; i++) {
-            var sub = s.slice(i, i+m)
+            var prefix = lower.slice(0,i);
+            var sub = lower.slice(i, i+m)
+            var suffix = lower.slice(i+m, l);
             if (CheckCommonWords(sub)) {
-                var prefix = s.slice(0,i);
-                var suffix = s.slice(i+m, l);
                 var v = EvalTmdp(prefix) + BitsCommonWords + EvalTmdp(suffix);
                 if ( v < r ) {
                     r = v;
-                    console.log("better: ", prefix, sub, suffix);
+                    console.log("CommonWord: ", prefix, sub, suffix);
                 }
             }
         }
     }
-    return r;
+
+    var i = FirstNum(mdp);
+    if (i >= 0) {
+        var prefix = mdp.slice(0,i);
+        var residue = mdp.slice(i, l);
+        var m = LastId(residue);
+        var sub = mdp.slice(i,i+m);
+        var suffix = mdp.slice(i+m, l);
+        var v = EvalTmdp(prefix) + Math.min(sub.length * BitsNumID, 16) + EvalTmdp(suffix);
+        if ( v < r ) {
+            r = v;
+            console.log("Id: ", prefix, sub, suffix);
+        }
+    } 
+
+    // il ne faut pas oublier de prendre en compte les modi
+    return r + Delta(mdp,lower);
 }
 
 // RawEvalMdp est une évaluation brute et moyenne de l'entropie
@@ -147,14 +204,16 @@ function RawEvalMdp (mdp) {
     return mdp.length * 4; // valeur moyenne à ce stade
 }
 
-function Set_Text(s) {
-    var e;
-    if (!document.getElementById) { return; }
-  
-    e = document.getElementById('tmdp');
+function SetText(s) {
+    var e = document.getElementById('tmdp');
     if (!e || e.innerHTML == s) { return; }
-   
     e.innerHTML = s;
+}
+
+function SetStrength(n, c) {
+    var e = document.getElementById('strength'); 
+    e.width = n +"%";
+    e.style.color = c;  
 }
 
 function ShowTmdp() {
@@ -168,31 +227,38 @@ function ShowTmdp() {
 
     s = bits + " bits <br />";
     if (bits < 24) {
-        s += "ALERTE : tellement faible qu'il peut être trouvé par une attaque en ligne <br />";
+        s += "ALERTE : si faible qu'il a de grande chance d'être découvert par une attaque en ligne <br />";
         score = "E";
+        color = "#e2001a";
     } else if (bits < 48) {
-        s += "FAIBLE : suffisant pour des mots de passe locaux, mais pas réseau. <br />";
+        s += "FAIBLE : suffisant pour des mots de passe sans enjeux, locaux mais pas réseau. <br />";
         score = "D";
+        color = "#f29400";
     } else if (bits < 72) {
         s += "MOYEN : cela suffit généralement à détourner des crackeurs de mots de passe amateurs. <br />";
         score = "C";
+        color = "#fecc00";
     } else if (bits < 96) {
         s += "SOLIDE : les attaques par dictionnaires ne réussiront pas ; attention seulement au réemploi. <br />";
         score = "B";
-    } else if (bits < 256) {
+        color = "#ffec00";
+    } else if (bits < 128) {
         s += "FORT : sauvegarder bien votre mot de passe parce que vous ne pourrez pas le retrouver. <br />"
         score = "A";
+        color = "#b1c800";
     } else {
         s += "Il n'y a pas de prix à gagner au mot de passe le plus long.";
         score = "A+";
+        color = "#58ab27";
     }
 
 
-    Set_Text(s);
+    SetText(s);
+    SetStrength(bits, color);
 }
 
 function CheckIfLoaded() {
-    Set_Text("Prêt.");
+    SetText("Prêt.");
 }
 
 window.setTimeout('CheckIfLoaded()', 100);
