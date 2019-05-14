@@ -187,7 +187,7 @@ function EvalTmdp(mdp) {
         var m = LastId(residue);
         var sub = mdp.slice(i,i+m);
         var suffix = mdp.slice(i+m, l);
-        var v = EvalTmdp(prefix) + Math.min(sub.length * BitsNumID, 16) + EvalTmdp(suffix);
+        var v = EvalTmdp(prefix) + Math.min(sub.length * BitsNumID, 48) + EvalTmdp(suffix);
         if ( v < r ) {
             r = v;
             console.log("Id: ", prefix, sub, suffix);
@@ -210,10 +210,16 @@ function SetText(s) {
     e.innerHTML = s;
 }
 
-function SetStrength(n, c) {
+function SetMeter(s) {
+    var e = document.getElementById('meter');
+    e.value = s;
+}
+
+function SetScore(s) {
     var e = document.getElementById('strength'); 
-    e.width = n +"%";
-    e.style.color = c;  
+    if (!e || e.innerHTML == s) { return; }
+    e.innerHTML = s;
+    e.className = "c-label c-label-" + s;  
 }
 
 function ShowTmdp() {
@@ -227,34 +233,29 @@ function ShowTmdp() {
 
     s = bits + " bits <br />";
     if (bits < 24) {
-        s += "ALERTE : si faible qu'il a de grande chance d'être découvert par une attaque en ligne <br />";
+        s += "ALERTE : faible au point qu'il a de grande chance d'être découvert par une attaque en ligne <br />";
         score = "E";
-        color = "#e2001a";
     } else if (bits < 48) {
         s += "FAIBLE : suffisant pour des mots de passe sans enjeux, locaux mais pas réseau. <br />";
         score = "D";
-        color = "#f29400";
-    } else if (bits < 72) {
+    } else if (bits < 64) {
         s += "MOYEN : cela suffit généralement à détourner des crackeurs de mots de passe amateurs. <br />";
         score = "C";
-        color = "#fecc00";
-    } else if (bits < 96) {
+    } else if (bits < 80) {
         s += "SOLIDE : les attaques par dictionnaires ne réussiront pas ; attention seulement au réemploi. <br />";
         score = "B";
-        color = "#ffec00";
-    } else if (bits < 128) {
+    } else if (bits < 96) {
         s += "FORT : sauvegarder bien votre mot de passe parce que vous ne pourrez pas le retrouver. <br />"
         score = "A";
-        color = "#b1c800";
     } else {
         s += "Il n'y a pas de prix à gagner au mot de passe le plus long.";
         score = "A+";
-        color = "#58ab27";
     }
 
 
     SetText(s);
-    SetStrength(bits, color);
+    SetMeter(bits);
+    SetScore(score);
 }
 
 function CheckIfLoaded() {

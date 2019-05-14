@@ -1,16 +1,26 @@
 <html lang="fr"><head><title>tmdp</title>
 <meta charset="utf-8">
 <script language="javascript" src="tmdp.js"></script>
-</head><body>
+<style type="text/css">
+.c-label { width: 1em; padding: 1.5em;}
+.c-label-A { background: #009036;}
+.c-label-B { background: #b1c800;}
+.c-label-C { background: #fecc00;}
+.c-label-D { background: #f29400;}
+.c-label-E { background: #e2001a;}
+.c-label-N { background: #aaaaaa;}
+</style>
+</head>
+<body>
     
 <p><a href="https://github.com/aglossa/tamis.js">Module tamis.js</a></p>
     
 <form method="POST" action="#" onkeyup="ShowTmdp()" name="tmdp_form">
-<p><b>Enter your password or passphrase here:</b></p>
+<p><b>Tapez votre mot de passe ci-dessous :</b></p>
 <p><input type=input size=40 name="passchk"></p>
-<p><meter value="0" min="0" low="48" high="72" optimum="96" max="128" id="strength"></meter></p>
-<div width="40em" height="1em"><span id="strength"></span></div>
 </form>
     
 <span id="tmdp">Loading ...</span>
+<p><progress value="0" min="0" max="96" id="meter"></progress></p>
+<div class="c-label" id="strength">-</div>
 </body></html>
