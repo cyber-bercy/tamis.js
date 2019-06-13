@@ -1,26 +1,35 @@
+<!DOCTYPE html>
 <html lang="fr"><head><title>tmdp</title>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
 <script language="javascript" src="tmdp.js"></script>
 <style type="text/css">
-.c-label { width: 1em; padding: 1.5em;}
+.c-label { width: 1em; padding: 1.5em; color: white; font-weight: bold; font-family: sans-serif;}
 .c-label-A { background: #009036;}
 .c-label-B { background: #b1c800;}
 .c-label-C { background: #fecc00;}
 .c-label-D { background: #f29400;}
 .c-label-E { background: #e2001a;}
 .c-label-N { background: #aaaaaa;}
+.c-progress { background: #666666; height: 4px;}
 </style>
 </head>
 <body>
     
-<p><a href="https://github.com/aglossa/tamis.js">Module tamis.js</a></p>
-    
-<form method="POST" action="#" onkeyup="ShowTmdp()" name="tmdp_form">
-<p><b>Tapez votre mot de passe ci-dessous :</b></p>
-<p><input type=input size=40 name="passchk"></p>
+<h1><a href="https://github.com/aglossa/tamis.js">Module tamis.js</a></h1>
+
+<div id="card" style="width: 30em">
+<form method="POST" action="#" id="tmdp_form">
+<p>Votre mot de passe :</p>
+<input type=password width="100%" id="password" onkeyup="ShowTmdp()" />
 </form>
-    
+
+<div id="results">
 <span id="tmdp">Loading ...</span>
-<p><progress value="0" min="0" max="96" id="meter"></progress></p>
+<div id="progress" class="c-progress" style="width: 1%"></div>
 <div class="c-label" id="strength">-</div>
+</div>
+
+</div>
 </body></html>

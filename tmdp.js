@@ -194,7 +194,7 @@ function EvalTmdp(mdp) {
         }
     } 
 
-    // il ne faut pas oublier de prendre en compte les modi
+    // il ne faut pas oublier de prendre en compte les modifs
     return r + Delta(mdp,lower);
 }
 
@@ -211,8 +211,8 @@ function SetText(s) {
 }
 
 function SetMeter(s) {
-    var e = document.getElementById('meter');
-    e.value = s;
+    var e = document.getElementById('progress');
+    e.style = "Width:"+Math.min(s, 100)+"%";
 }
 
 function SetScore(s) {
@@ -222,44 +222,87 @@ function SetScore(s) {
     e.className = "c-label c-label-" + s;  
 }
 
+async function sha1(s) {
+    var buffer = new TextEncoder("utf-8").encode(s);
+    return crypto.subtle.digest("SHA-1", buffer);
+}
+
+function arrayBufferToHex (arrayBuffer) {
+    var view = new Uint8Array(arrayBuffer)
+    var result = ''
+    var value
+  
+    for (var i = 0; i < view.length; i++) {
+      value = view[i].toString(16)
+      result += (value.length === 1 ? '0' + value : value)
+    }
+  
+    return result
+  }
+
+async function HaveIBeenPwned(s) {
+    let hashbuffer = await sha1(s);
+    let hash16 = arrayBufferToHex(hashbuffer).toUpperCase();
+    //console.log(hash16);
+
+    let range = hash16.slice(0, 5)
+    let response = await fetch(`https://api.pwnedpasswords.com/range/${range}`)
+    let body = await response.text()
+    //console.log(body);
+
+    let suffix = hash16.slice(5)
+    let regex = new RegExp(`^${suffix}:`, 'm')
+    return regex.test(body)
+}
+
 function ShowTmdp() {
-    var mdp = document.tmdp_form.passchk.value;
+    var e = document.getElementById('password');
+    var mdp = e.value;
     var s = "", bits = 0, score = "";
 
 
  //   console.log("ShowTmdp : ", mdp);
 
-    bits = EvalTmdp(mdp);
+    bits = Math.round(EvalTmdp(mdp));
 
     s = bits + " bits <br />";
     if (bits < 24) {
         s += "ALERTE : faible au point qu'il a de grande chance d'être découvert par une attaque en ligne <br />";
         score = "E";
     } else if (bits < 48) {
-        s += "FAIBLE : suffisant pour des mots de passe sans enjeux, locaux mais pas réseau. <br />";
+        s += "FAIBLE : suffisant uniquement en l'absence d'enjeux (mot de passe local mais pas réseau, ou si le système distant est super pro !) <br />";
         score = "D";
     } else if (bits < 64) {
-        s += "MOYEN : cela suffit généralement à détourner des crackeurs de mots de passe amateurs. <br />";
+        s += "MOYEN : suffisant pour détourner des crackeurs de mots de passe amateurs.<br />";
         score = "C";
     } else if (bits < 80) {
         s += "SOLIDE : les attaques par dictionnaires ne réussiront pas ; attention seulement au réemploi. <br />";
         score = "B";
     } else if (bits < 96) {
-        s += "FORT : sauvegarder bien votre mot de passe parce que vous ne pourrez pas le retrouver. <br />"
+        s += "FORT : conserver bien votre mot de passe parce que vous ne pourrez probablement pas le retrouver de mémoire. <br />"
         score = "A";
     } else {
         s += "Il n'y a pas de prix à gagner au mot de passe le plus long.";
-        score = "A+";
+        score = "A";
     }
 
 
     SetText(s);
     SetMeter(bits);
     SetScore(score);
+    
+    HaveIBeenPwned(mdp)
+    .then(pwned => {
+        if (pwned) {
+            SetText("ALERTE : mot de passe éventé !");
+            SetScore("E");
+            console.log("HIBP!");
+        }
+    });
 }
 
 function CheckIfLoaded() {
-    SetText("Prêt.");
+    SetText("...");
 }
 
 window.setTimeout('CheckIfLoaded()', 100);
