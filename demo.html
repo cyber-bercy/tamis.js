@@ -21,13 +21,15 @@
 
 <div id="card" style="width: 30em">
 <form method="POST" action="#" id="tmdp_form">
-<p>Votre mot de passe :</p>
-<input type=password width="100%" id="password" onkeyup="ShowTmdp()" />
+<label for="password">Votre mot de passe :</label>
+<p><input id="password" size="28" type=password onkeyup="ScoreTmdp()" /></p>
+<p><input id="hibp" type="checkbox" onclick="ScoreHIBP()" />
+<label for="hibp">Vérifier fuite sur HIBP</label></p> 
 </form>
 
 <div id="results">
-<span id="tmdp">Loading ...</span>
 <div id="progress" class="c-progress" style="width: 1%"></div>
+<div id="tmdp">Chargement...</div>
 <div class="c-label" id="strength">-</div>
 </div>
 

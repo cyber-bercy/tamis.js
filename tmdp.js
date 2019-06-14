@@ -160,7 +160,7 @@ function EvalTmdp(mdp) {
         var v = EvalTmdp(toogled) + Delta(toogled, lower);
         if ( v < r ) {
             r = v;
-            console.log("better toogled: ", toogled);
+            // console.log("better toogled: ", toogled);
         }
     }
 
@@ -174,7 +174,7 @@ function EvalTmdp(mdp) {
                 var v = EvalTmdp(prefix) + BitsCommonWords + EvalTmdp(suffix);
                 if ( v < r ) {
                     r = v;
-                    console.log("CommonWord: ", prefix, sub, suffix);
+                    // console.log("CommonWord: ", prefix, sub, suffix);
                 }
             }
         }
@@ -190,7 +190,7 @@ function EvalTmdp(mdp) {
         var v = EvalTmdp(prefix) + Math.min(sub.length * BitsNumID, 48) + EvalTmdp(suffix);
         if ( v < r ) {
             r = v;
-            console.log("Id: ", prefix, sub, suffix);
+            // console.log("Id: ", prefix, sub, suffix);
         }
     } 
 
@@ -200,7 +200,7 @@ function EvalTmdp(mdp) {
 
 // RawEvalMdp est une évaluation brute et moyenne de l'entropie
 function RawEvalMdp (mdp) {
-    console.log("RawEvalMdp: ", mdp);
+    // console.log("RawEvalMdp: ", mdp);
     return mdp.length * 4; // valeur moyenne à ce stade
 }
 
@@ -255,22 +255,32 @@ async function HaveIBeenPwned(s) {
     return regex.test(body)
 }
 
-function ShowTmdp() {
-    var e = document.getElementById('password');
-    var mdp = e.value;
+function ScoreHIBP() {
+    //console.log("ScoreHIBP");
+    var mdp = document.getElementById('password').value;
+    HaveIBeenPwned(mdp)
+    .then(pwned => {
+        if (pwned) {
+            SetText("ALERTE : mot de passe éventé !");
+            SetScore("E");
+            console.log("HIBP!");
+        }
+    });
+}
+
+function ScoreTmdp() {
+   // console.log("ShowTmdp);
+    document.getElementById("hibp").checked = false;
+    var mdp = document.getElementById('password').value;
     var s = "", bits = 0, score = "";
 
-
- //   console.log("ShowTmdp : ", mdp);
-
     bits = Math.round(EvalTmdp(mdp));
-
-    s = bits + " bits <br />";
+    s = "Entropie estimée&nbsp;: " + bits + " bits <br />";
     if (bits < 24) {
         s += "ALERTE : faible au point qu'il a de grande chance d'être découvert par une attaque en ligne <br />";
         score = "E";
     } else if (bits < 48) {
-        s += "FAIBLE : suffisant uniquement en l'absence d'enjeux (mot de passe local mais pas réseau, ou si le système distant est super pro !) <br />";
+        s += "FAIBLE : suffisant en l'absence d'enjeux (mot de passe local mais pas réseau, ou si le système distant est super pro !) <br />";
         score = "D";
     } else if (bits < 64) {
         s += "MOYEN : suffisant pour détourner des crackeurs de mots de passe amateurs.<br />";
@@ -286,19 +296,9 @@ function ShowTmdp() {
         score = "A";
     }
 
-
     SetText(s);
     SetMeter(bits);
     SetScore(score);
-    
-    HaveIBeenPwned(mdp)
-    .then(pwned => {
-        if (pwned) {
-            SetText("ALERTE : mot de passe éventé !");
-            SetScore("E");
-            console.log("HIBP!");
-        }
-    });
 }
 
 function CheckIfLoaded() {
