@@ -95,6 +95,7 @@ const BitsCommonWords = Math.log2(Object.keys(CommonWords).length);
 const BitsChar = Math.log2(26);
 const BitsNum = Math.log2(10);
 const BitsAlt = Math.log2(38);
+const BitsCharset = Math.log2(74);
 const BitsNumID = 2.0;
 
 
@@ -831,6 +832,16 @@ const Frequences = [
   ]
 
 
+  function GetFrequencesIndex(c)
+  {
+     c = c.charAt(0).toLowerCase();
+     if (c < 'a' || c > 'z')
+     {
+        return 0;
+     }
+     return c.charCodeAt(0) - 'a'.charCodeAt(0) + 1;
+  }
+
 function FrenchLowerCase(s) {
     var r = s.toLowerCase();
     r = r.replace(/é/g, "e").replace(/è/g, "e").replace(/ê/g, "e").replace(/ë/g, "e");
@@ -944,8 +955,22 @@ function EvalTmdp(mdp) {
 
 // RawEvalMdp est une évaluation brute et moyenne de l'entropie
 function RawEvalMdp (mdp) {
-    // console.log("RawEvalMdp: ", mdp);
-    return mdp.length * 4; // valeur moyenne à ce stade
+    console.log("RawEvalMdp: ", mdp);
+    // return mdp.length * 4; // valeur moyenne à ce stade
+
+    var bits = BitsCharset;
+    var aidx = GetFrequencesIndex(mdp.charAt(0));
+    for (var b = 1; b < mdp.length; b ++)
+    {
+        var c = 0 ; bidx = GetFrequencesIndex(mdp.charAt(b));
+        console.log("bidx: ", bidx);
+        c = 1.0 - Frequences[aidx * 27 + bidx];
+        bits += BitsCharset * c * c; 
+        aidx = bidx;
+    }
+    console.log("RawEvalMdp: ", mdp, bits);
+    return bits;
+
 }
 
 function SetText(s) {
