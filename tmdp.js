@@ -955,9 +955,6 @@ function EvalTmdp(mdp) {
 
 // RawEvalMdp est une évaluation brute et moyenne de l'entropie
 function RawEvalMdp (mdp) {
-    console.log("RawEvalMdp: ", mdp);
-    // return mdp.length * 4; // valeur moyenne à ce stade
-
     var bits = BitsCharset;
     var aidx = GetFrequencesIndex(mdp.charAt(0));
     for (var b = 1; b < mdp.length; b ++)
@@ -968,7 +965,7 @@ function RawEvalMdp (mdp) {
         bits += BitsCharset * c * c; 
         aidx = bidx;
     }
-    console.log("RawEvalMdp: ", mdp, bits);
+    //console.log("RawEvalMdp: ", mdp, bits);
     return bits;
 
 }
