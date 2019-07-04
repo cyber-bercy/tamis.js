@@ -3,6 +3,13 @@
 
 'use strict;'
 
+// les ID des éléments HTML/CSS utilisés comme input ou output
+const HTML_PASSWORD = "password"
+const HTML_COMPLEXITE = "progress"
+const HTML_MESSAGE  = "tmdp"
+const HTML_SCORE    = "strength"
+const CSS_LABEL     = "c-label"
+
 // dictionnaire de composants courants de mots de passe
 
 const CommonWords ={
@@ -205,67 +212,21 @@ function RawEvalMdp (mdp) {
 }
 
 function SetText(s) {
-    var e = document.getElementById('tmdp');
+    var e = document.getElementById(HTML_MESSAGE);
     if (!e || e.innerHTML == s) { return; }
     e.innerHTML = s;
 }
 
-function SetMeter(s) {
-    var e = document.getElementById('progress');
+function SetComplexity(s) {
+    var e = document.getElementById(HTML_COMPLEXITE);
     e.style = "Width:"+Math.min(s, 100)+"%";
 }
 
 function SetScore(s) {
-    var e = document.getElementById('strength'); 
+    var e = document.getElementById(HTML_SCORE); 
     if (!e || e.innerHTML == s) { return; }
     e.innerHTML = s;
-    e.className = "c-label c-label-" + s;  
-}
-
-async function sha1(s) {
-    var buffer = new TextEncoder("utf-8").encode(s);
-    return crypto.subtle.digest("SHA-1", buffer);
-}
-
-function arrayBufferToHex (arrayBuffer) {
-    var view = new Uint8Array(arrayBuffer)
-    var result = ''
-    var value
-  
-    for (var i = 0; i < view.length; i++) {
-      value = view[i].toString(16)
-      result += (value.length === 1 ? '0' + value : value)
-    }
-  
-    return result
-  }
-
-async function HaveIBeenPwned(s) {
-    let hashbuffer = await sha1(s);
-    let hash16 = arrayBufferToHex(hashbuffer).toUpperCase();
-    //console.log(hash16);
-
-    let range = hash16.slice(0, 5)
-    let response = await fetch(`https://api.pwnedpasswords.com/range/${range}`)
-    let body = await response.text()
-    //console.log(body);
-
-    let suffix = hash16.slice(5)
-    let regex = new RegExp(`^${suffix}:`, 'm')
-    return regex.test(body)
-}
-
-function ScoreHIBP() {
-    //console.log("ScoreHIBP");
-    var mdp = document.getElementById('password').value;
-    HaveIBeenPwned(mdp)
-    .then(pwned => {
-        if (pwned) {
-            SetText("ALERTE : mot de passe éventé !");
-            SetScore("E");
-            console.log("HIBP!");
-        }
-    });
+    e.className = CSS_LABEL + " " + CSS_LABEL + "-" + s;  
 }
 
 function ScoreTmdp() {
@@ -277,32 +238,41 @@ function ScoreTmdp() {
     bits = Math.round(EvalTmdp(mdp));
     s = "Entropie estimée&nbsp;: " + bits + " bits <br />";
     if (bits < 24) {
-        s += "ALERTE : faible au point qu'il a de grande chance d'être découvert par une attaque en ligne <br />";
         score = "E";
     } else if (bits < 48) {
-        s += "FAIBLE : suffisant en l'absence d'enjeux (mot de passe local mais pas réseau, ou si le système distant est super pro !) <br />";
         score = "D";
     } else if (bits < 64) {
-        s += "MOYEN : suffisant pour détourner des crackeurs de mots de passe amateurs.<br />";
         score = "C";
     } else if (bits < 80) {
-        s += "SOLIDE : les attaques par dictionnaires ne réussiront pas ; attention seulement au réemploi. <br />";
         score = "B";
-    } else if (bits < 96) {
-        s += "FORT : conserver bien votre mot de passe parce que vous ne pourrez probablement pas le retrouver de mémoire. <br />"
-        score = "A";
     } else {
-        s += "Il n'y a pas de prix à gagner au mot de passe le plus long.";
         score = "A";
     }
 
-    SetText(s);
-    SetMeter(bits);
+    SetComplexity(bits);
     SetScore(score);
+    SetText(GetMessageFromScore(score));
+}
+
+function GetMessageFromScore(score) {
+    switch (score) {
+        case "A":
+            return "FORT : conserver bien votre mot de passe parce que vous ne pourrez probablement pas le retrouver de mémoire.";
+        case "B":
+            return "SOLIDE : les attaques par dictionnaires ne réussiront pas ; attention seulement au réemploi.";
+        case "C":
+            return "MOYEN : suffisant pour détourner des crackeurs de mots de passe amateurs.";
+        case "D":
+            return "FAIBLE : suffisant en l'absence d'enjeux (mot de passe local mais pas réseau, ou si le système distant est super pro !)";
+        case "E":
+            return "ALERTE : faible au point qu'il a de grande chance d'être découvert par une attaque en ligne";
+        default:
+            return "-";
+    }
 }
 
 function CheckIfLoaded() {
-    SetText("...");
+    SetText("");
 }
 
 window.setTimeout('CheckIfLoaded()', 100);
