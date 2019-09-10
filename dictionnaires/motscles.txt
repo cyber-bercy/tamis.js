@@ -1,0 +1,121 @@
+// clavier
+azerty
+&é"'
+(-è_
+çà)=
+azer
+qsdf
+wxcv
+!:;,
+§/.?
+*ùml
+µ%ML
+$^po
+£¨PO
+aqwzsx
+szaq
+xsqw
+// PIN par défaut
+12345678
+123456
+0000
+3333
+5555
+1234
+1515
+// prénoms
+anne
+jean
+philippe
+pierre
+stephane
+christophe
+christian
+michel
+nathalie
+corinne
+cerise
+loulou
+valentine
+paul
+patoche
+pascal
+sandrine
+titi
+// villes, région
+france
+francais
+paris
+lyon
+marseille
+bordeaux
+bretagne
+normandie
+saint
+malo
+raphael
+reunion
+martinique
+// logins & password par défaut
+root
+toor
+admin
+administrateur
+administrator
+default
+guest
+password
+pass
+secret
+prod
+tomcat
+// mois
+janvier
+fevrier
+mars
+avril
+mai
+juin
+juillet
+aout
+septembre
+octobre
+novembre
+decembre
+// jours
+lundi
+mardi
+mercredi
+jeudi
+vendredi
+samedi
+dimanche
+// saisons
+hiver
+printemps
+ete
+automne
+retraite
+vacance
+noel
+// années courantes
+1998
+2000
+2018
+2019
+2020
+2024
+// noms de services et fonctions
+finance
+budget
+compta
+dgfip
+douane
+tresor
+ccrf
+insee
+// racines de dérivés
+secreta
+general
+fonction
+inspect
