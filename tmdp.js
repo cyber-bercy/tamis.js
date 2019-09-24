@@ -5933,7 +5933,7 @@ function SetText(s) {
 
 function SetComplexity(s, color) {
     var e = document.getElementById(HTML_COMPLEXITE);
-    e.style = "Width:"+Math.min(s, 100)+"%";
+    e.style.width = Math.min(s, 100)+"%";
     e.style.background = color;
 }
 
