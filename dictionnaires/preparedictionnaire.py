@@ -11,4 +11,4 @@ for ligne in fileinput.input():
 
 for mot, longueur in vocabulaire.items():
     if longueur >= 4 :
-        print ( "\"{0}\": {1},".format(mot, longueur) )
+        print ( "\"{0}\": {1},".format(mot.replace('"', '\"'), longueur) )
