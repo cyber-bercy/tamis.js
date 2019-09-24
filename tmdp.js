@@ -9,11 +9,25 @@ const HTML_COMPLEXITE = "progress"
 const HTML_MESSAGE  = "tmdp"
 const HTML_SCORE    = "strength"
 const CSS_LABEL     = "c-label"
+const MSG_ENTROPIE  = false
+
+// utilitaire pour débogage
+const DEBUG         = false
+
+
+// évidemment IE bug sur syntaxe avancée
+//function DebugLog(...msg) {
+function DebugLog(msg) {
+    if (DEBUG) {
+        console.log(msg);
+    }
+}
+
 
 // dictionnaire de composants courants de mots de passe
 
 const CommonWords ={
-    "123456": 6,
+"123456": 6,
 "123456789": 9,
 "azerty": 6,
 "1234561": 7,
@@ -5019,14 +5033,13 @@ const CommonWords ={
 // pour les moteurs Javascript comme IE qui ne connaissent pas Math.log2
 Math.log2 = Math.log2 || function(x){return Math.log(x)*Math.LOG2E;};
 
-const MinComponentsLength = 3
+const MinComponentsLength = 4
 const BitsCommonWords = Math.log2(Object.keys(CommonWords).length);
 const BitsChar = Math.log2(26);
 const BitsNum = Math.log2(10);
 const BitsAlt = Math.log2(38);
 const BitsCharset = Math.log2(74);
-const BitsNumID = 2.0;
-
+const BitsNumID = Math.log2(10);
 
 const Frequences = [
     0.23653710453418866,
@@ -5761,15 +5774,15 @@ const Frequences = [
   ]
 
 
-  function GetFrequencesIndex(c)
-  {
-     c = c.charAt(0).toLowerCase();
-     if (c < 'a' || c > 'z')
-     {
-        return 0;
-     }
-     return c.charCodeAt(0) - 'a'.charCodeAt(0) + 1;
-  }
+function GetFrequencesIndex(c)
+{
+    c = c.charAt(0).toLowerCase();
+    if (c < 'a' || c > 'z')
+    {
+    return 0;
+    }
+    return c.charCodeAt(0) - 'a'.charCodeAt(0) + 1;
+}
 
 function FrenchLowerCase(s) {
     var r = s.toLowerCase();
@@ -5796,7 +5809,7 @@ function Delta(s1, s2){
     for (i=0; i < l; i++) {
         if (s1[i] != s2[i]) {
             delta++;
-//            console.log("Delta: ", s1[i], delta);
+            DebugLog("Delta: ", s1[i], delta);
         }
     }
     return delta;
@@ -5804,7 +5817,7 @@ function Delta(s1, s2){
 
 function CheckCommonWords(s) {
     if (CommonWords[s]) {
-        console.log("CommonWords: ", s, " présent dans le dictionnaire.");
+        DebugLog("CheckCommonWords: ", s);
         return true;
     }
     return false;
@@ -5813,52 +5826,63 @@ function CheckCommonWords(s) {
 const NumCharset = "0123456789";
 function FirstNum(s) {
     var i=0, l = s.length;
-    while ( i<l && !NumCharset.includes(s[i]) ) {
+    while ( i<l && NumCharset.indexOf(s[i])<0 ) {
         i++;
     }
     if ( i == s.length) {
         return -1;
     }
-//    console.log("FirstNum: ", s, i);
+    //DebugLog("FirstNum: ", s, i);
     return i;
 }
 
 const IdCharset = "0123456789.-/: ";
 function LastId(s) {
     var i=0, l = s.length;
-    while ( i<l && IdCharset.includes(s[i]) ) {
+    while ( i<l && IdCharset.indexOf(s[i])>=0 ) {
         i++;
     }
-//    console.log("LastId: ", s, i);
+    //DebugLog("LastId: ", s, i);
     return i; 
 }
 
 
 // EvalMdp essaie de trouver la transformation qui minimise l'entropie.
-function EvalTmdp(mdp) {
+// Comme l'analyse est récursive, il faut une protection contre les descentes en profondeur interminables
+function EvalTmdp(mdp, profondeur) {
+    DebugLog("EvalTmdp: ", mdp, profondeur)
+    if (mdp.length == 0) {
+        return 0;
+    }
+
     var lower = FrenchLowerCase(mdp);
-    var r = RawEvalMdp(lower); 
+    var r = FreqEvalMdp(lower); 
+
+    if (profondeur > 3) {
+        return r;
+    }
 
     var toogled = Toogle(lower);
     if ( toogled != lower ) {
-        var v = EvalTmdp(toogled) + Delta(toogled, lower);
+        var v = EvalTmdp(toogled, profondeur+1) + Delta(toogled, lower);
         if ( v < r ) {
             r = v;
-            // console.log("better toogled: ", toogled);
+            DebugLog("better toogled: ", toogled);
         }
     }
 
     var l = lower.length;
-    for (var m=MinComponentsLength; m <= l; m++){
+    // on commence en recherchant les plus grands composants !
+    for (var m=l-1; m >= MinComponentsLength; m--){
         for (var i=0; i+m <= l; i++) {
             var prefix = lower.slice(0,i);
             var sub = lower.slice(i, i+m)
             var suffix = lower.slice(i+m, l);
             if (CheckCommonWords(sub)) {
-                var v = EvalTmdp(prefix) + BitsCommonWords + EvalTmdp(suffix);
+                var v = EvalTmdp(prefix, profondeur+1) + BitsCommonWords + EvalTmdp(suffix, profondeur+1);
                 if ( v < r ) {
                     r = v;
-                    // console.log("CommonWord: ", prefix, sub, suffix);
+                    DebugLog("CommonWord: ", prefix, sub, suffix, r);
                 }
             }
         }
@@ -5871,10 +5895,10 @@ function EvalTmdp(mdp) {
         var m = LastId(residue);
         var sub = mdp.slice(i,i+m);
         var suffix = mdp.slice(i+m, l);
-        var v = EvalTmdp(prefix) + Math.min(sub.length * BitsNumID, 48) + EvalTmdp(suffix);
+        var v = EvalTmdp(prefix, profondeur+1) + Math.min(sub.length * BitsNumID, 48) + EvalTmdp(suffix, profondeur+1);
         if ( v < r ) {
             r = v;
-            // console.log("Id: ", prefix, sub, suffix);
+            DebugLog("Id: ", prefix, sub, suffix, r);
         }
     } 
 
@@ -5883,20 +5907,22 @@ function EvalTmdp(mdp) {
 }
 
 // RawEvalMdp est une évaluation brute et moyenne de l'entropie
-function RawEvalMdp (mdp) {
+function FreqEvalMdp (mdp) {
+    if (mdp.length == 0) {
+        return 0;
+    }
     var bits = BitsCharset;
     var aidx = GetFrequencesIndex(mdp.charAt(0));
     for (var b = 1; b < mdp.length; b ++)
     {
         var c = 0 ; bidx = GetFrequencesIndex(mdp.charAt(b));
-        console.log("bidx: ", bidx);
+        //DebugLog("bidx: ", bidx);
         c = 1.0 - Frequences[aidx * 27 + bidx];
         bits += BitsCharset * c * c; 
         aidx = bidx;
     }
-    //console.log("RawEvalMdp: ", mdp, bits);
+    DebugLog("FreqEvalMdp: ", mdp, bits);
     return bits;
-
 }
 
 function SetText(s) {
@@ -5905,9 +5931,10 @@ function SetText(s) {
     e.innerHTML = s;
 }
 
-function SetComplexity(s) {
+function SetComplexity(s, color) {
     var e = document.getElementById(HTML_COMPLEXITE);
     e.style = "Width:"+Math.min(s, 100)+"%";
+    e.style.background = color;
 }
 
 function SetScore(s) {
@@ -5918,13 +5945,13 @@ function SetScore(s) {
 }
 
 function ScoreTmdp() {
-   // console.log("ShowTmdp);
+    DebugLog("ScoreTmdp");
     document.getElementById("hibp").checked = false;
-    var mdp = document.getElementById('password').value;
+    var mdp = document.getElementById(HTML_PASSWORD).value;
     var s = "", bits = 0, score = "";
 
-    bits = Math.round(EvalTmdp(mdp));
-    s = "Entropie estimée&nbsp;: " + bits + " bits <br />";
+    bits = Math.round(EvalTmdp(mdp, 0));
+
     if (bits < 24) {
         score = "E";
     } else if (bits < 48) {
@@ -5937,9 +5964,13 @@ function ScoreTmdp() {
         score = "A";
     }
 
-    SetComplexity(bits);
+    SetComplexity(bits, GetColorFromScore(score));
     SetScore(score);
-    SetText(GetMessageFromScore(score));
+    if (MSG_ENTROPIE) {
+        SetText("Entropie estimée&nbsp;: " + bits + " bits");
+    } else {
+        SetText(GetMessageFromScore(score));
+    }
 }
 
 function GetMessageFromScore(score) {
@@ -5959,9 +5990,27 @@ function GetMessageFromScore(score) {
     }
 }
 
-function CheckIfLoaded() {
+function GetColorFromScore(score) {
+    switch (score) {
+        case "A":
+            return "#009036";
+        case "B":
+            return "#b1c800";            
+        case "C":
+            return "#fecc00";
+        case "D":
+            return "#f29400";
+        case "E":
+            return "#e2001a";
+        default:
+            return "#666666";
+    }
+}
+
+
+function StartTmdp () {
+    document.getElementById(HTML_PASSWORD).addEventListener("keyup", ScoreTmdp, false);
     SetText("");
 }
 
-window.setTimeout('CheckIfLoaded()', 100);
-
+window.addEventListener("load", StartTmdp, false);

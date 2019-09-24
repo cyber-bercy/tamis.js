@@ -3,6 +3,7 @@
 
 'use strict;'
 
+const HTML_HIBP = "hibp";
 
 async function sha1(s) {
     var buffer = new TextEncoder("utf-8").encode(s);
@@ -25,12 +26,12 @@ function arrayBufferToHex (arrayBuffer) {
 async function HaveIBeenPwned(s) {
     let hashbuffer = await sha1(s);
     let hash16 = arrayBufferToHex(hashbuffer).toUpperCase();
-    //console.log(hash16);
+    DebugLog(hash16);
 
     let range = hash16.slice(0, 5)
-    let response = await fetch(`https://api.pwnedpasswords.com/range/${range}`)
+    let response = await fetch(`https://ssi.economie.gouv.fr/hibp/${range}`)
     let body = await response.text()
-    //console.log(body);
+    DebugLog(body);
 
     let suffix = hash16.slice(5)
     let regex = new RegExp(`^${suffix}:`, 'm')
@@ -38,16 +39,31 @@ async function HaveIBeenPwned(s) {
 }
 
 function ScoreHIBP() {
-    //console.log("ScoreHIBP");
+    DebugLog("ScoreHIBP");
     var mdp = document.getElementById(HTML_PASSWORD).value;
     HaveIBeenPwned(mdp)
     .then(pwned => {
         if (pwned) {
-            SetText("ALERTE : mot de passe éventé !");
+            SetText("ALERTE : mot de passe déjà éventé !");
             SetScore("E");
-            console.log("HIBP!");
+            DebugLog("HIBP!");
         }
     });
 }
 
+
+async function StartHIBP () {
+    e = document.getElementById(HTML_HIBP)
+    if (!e) {
+        return;
+    }
+    let h = await sha1("test");
+    if (h && (h.byteLength == 20) ) {
+        e.addEventListener("click", ScoreHIBP, false);
+        console.log("change visible")
+        e.parentNode.style.visibility = "visible";
+    }
+}
+
+window.addEventListener("load", StartHIBP, false);
 
