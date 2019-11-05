@@ -4,20 +4,33 @@
 'use strict;'
 
 // les ID des éléments HTML/CSS utilisés comme input ou output
-const HTML_PASSWORD = "password"
-const HTML_COMPLEXITE = "progress"
-const HTML_MESSAGE  = "tmdp"
-const HTML_SCORE    = "strength"
-const CSS_LABEL     = "c-label"
-const MSG_ENTROPIE  = false
+var HTML_PASSWORD = "password"
+var HTML_COMPLEXITE = "progress"
+var HTML_MESSAGE  = "tmdp"
+var HTML_SCORE    = "strength"
+var CSS_LABEL     = "c-label"
+var MSG_ENTROPIE  = false
 
 // utilitaire pour débogage
-const DEBUG         = false
+var DEBUG         = false
 
+function GetEnvAttributes() {
+    js = document.getElementById("tmdp-js");
+    if (js) {
+        HTML_PASSWORD = js.getAttribute("html-password") || HTML_PASSWORD;
+        HTML_COMPLEXITE = js.getAttribute("html-complexite") || HTML_COMPLEXITE;
+        HTML_MESSAGE = js.getAttribute("html-message") || HTML_MESSAGE;
+        HTML_SCORE = js.getAttribute("html-score") || HTML_SCORE;
+        CSS_LABEL = js.getAttribute("css-label") || CSS_LABEL;
+        MSG_ENTROPIE = js.getAttribute("msg-entropie") || MSG_ENTROPIE;
+        DEBUG = js.getAttribute("debug") || DEBUG;
+    }
+
+}
 
 // évidemment IE bug sur syntaxe avancée
-//function DebugLog(...msg) {
-function DebugLog(msg) {
+function DebugLog(...msg) {
+//function DebugLog(msg) {
     if (DEBUG) {
         console.log(msg);
     }
@@ -4601,6 +4614,7 @@ const BitsNum = Math.log2(10);
 const BitsAlt = Math.log2(38);
 const BitsCharset = Math.log2(74);
 const BitsNumID = Math.log2(10);
+const BitsRepeatedChar = 1.4;
 
 const Frequences = [
     0.23653710453418866,
@@ -5376,6 +5390,18 @@ function Delta(s1, s2){
     return delta;
 }
 
+function Deduplicate(s) {
+    var l = s.length;
+    if ( l<2 ) { return s; }
+    var dd = s[0];
+    for (i=1; i < l; i++) {
+        if (s[i] != s[i-1]) {
+            dd = dd.concat(s[i]);
+        }
+    }
+    return dd;
+}
+
 function CheckCommonWords(s) {
     if (CommonWords[s]) {
         DebugLog("CheckCommonWords: ", s);
@@ -5416,6 +5442,11 @@ function EvalTmdp(mdp, profondeur) {
         return 0;
     }
 
+    var dedup = Deduplicate(mdp);
+    if ( dedup != mdp) {
+        //DebugLog("Dedup: ", mdp, " => ", dedup, profondeur);
+        return EvalTmdp(dedup, profondeur + 1) + (mdp.length - dedup.length) * BitsRepeatedChar ;
+    }
     var lower = FrenchLowerCase(mdp);
     var r = FreqEvalMdp(lower); 
 
@@ -5467,7 +5498,7 @@ function EvalTmdp(mdp, profondeur) {
     return r + Delta(mdp,lower);
 }
 
-// RawEvalMdp est une évaluation brute et moyenne de l'entropie
+// FreqEvalMdp est une évaluation brute et moyenne de l'entropie
 function FreqEvalMdp (mdp) {
     if (mdp.length == 0) {
         return 0;
@@ -5581,4 +5612,5 @@ function StartTmdp () {
     SetText("");
 }
 
+GetEnvAttributes();
 window.addEventListener("load", StartTmdp, false);
