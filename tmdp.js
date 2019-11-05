@@ -645,7 +645,7 @@ const CommonWords ={
     "putain": 6,
     "kaka": 4,
     "cecilia": 7,
-    "&é"'": 5,
+    "&é\"'": 5,
     "houria": 6,
     "fabrice": 7,
     "proutprout": 10,
@@ -3058,7 +3058,7 @@ const CommonWords ={
     "melanie1": 8,
     "bitch1": 6,
     "simple": 6,
-    "&é"'(-": 7,
+    "&é\"'(-": 7,
     "celeste": 7,
     "whatever": 8,
     "badminton": 9,
@@ -5494,15 +5494,22 @@ function SetText(s) {
 
 function SetComplexity(s, color) {
     var e = document.getElementById(HTML_COMPLEXITE);
+    if (!e) { return; }
     e.style.width = Math.min(s, 100)+"%";
     e.style.background = color;
 }
 
 function SetScore(s) {
     var e = document.getElementById(HTML_SCORE); 
-    if (!e || e.innerHTML == s) { return; }
-    e.innerHTML = s;
-    e.className = CSS_LABEL + " " + CSS_LABEL + "-" + s;  
+    if (!e) { return; }
+    //Debuglog(e.nodeName)
+    switch (e.nodeName) {
+        case "DIV":
+            e.innerHTML = s;
+            e.className = CSS_LABEL + " " + CSS_LABEL + "-" + s; 
+        case "INPUT":
+            e.value = s;
+    }
 }
 
 function ScoreTmdp() {
