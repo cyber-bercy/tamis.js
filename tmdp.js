@@ -5341,6 +5341,7 @@ const Frequences = [
 Math.log2 = Math.log2 || function(x){return Math.log(x)*Math.LOG2E;};
 
 const MinComponentsLength = 4
+const MaxComponentsLength = 12
 const BitsCommonWords = Math.log2(Object.keys(CommonWords).length);
 const BitsChar = Math.log2(26);
 const BitsNum = Math.log2(10);
@@ -5459,7 +5460,7 @@ function EvalTmdp(mdp, profondeur) {
         }
     }
 
-    var l = lower.length;
+    var l = Math.min(lower.length, MaxComponentsLength);
     // on commence en recherchant les plus grands composants
     for (var m=l; m >= MinComponentsLength; m--) {
         // les prefix et suffix peuvent être vides

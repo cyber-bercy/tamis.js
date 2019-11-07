@@ -4,7 +4,9 @@ modules Tamis en Javacript pour vérification solidité mdp dans navigateurs
 
 ## Origine
 
-Au départ, la librairie tmdp s'insipre de loin de [PassChk, Tyler Akins](http://rumkin.com/tools/password/passchk.php),
+Au départ, la librairie tmdp.js s'est inspirée de loin de [PassChk, Tyler Akins](http://rumkin.com/tools/password/passchk.php)
+pour la prise en compte des probabilités de caractères successifs dans un texte, facteur exploité par les crackeurs de mots de passe évolués.
+
 Elle s'adapte à un contexte français plus récent :
 
 - clavier latin avec jeu de caractères spécifiques : éçàù etc
@@ -13,7 +15,7 @@ Elle s'adapte à un contexte français plus récent :
 - recherche des caractères doublonnés, et de l'autosimilarité (réemploi d'un même motif à plusieurs reprises)
 
 ## Installation
-1. Copier les fichiers .js (tmdp.js est le fichier principal qui calcule la solidité, hibp.js est un fichier secondaire qui teste si le mdp a déjà fuité).
+1. Copier les fichiers .js (tmdp.js est le fichier principal qui calcule la solidité, hibp.js est un fichier secondaire qui teste si le mdp a déjà fuité). Il est recommendé d'héberger ces ressources statiques sur la même origine (au sens http). Sinon il faut introduire SRI et probablement la complexité de CORS.
 2. Inclure les références dans le HTML/HEAD
 3. Tester avec un panel de navigateurs (Chrome, Firefox, Safari, Edge, IE...)
 
@@ -39,13 +41,12 @@ hibp.js n'est pas paramétrable et l'intégration passe par le respect de conven
 
 Pour changer les valeurs par défaut, par exemple HTML_PASSWORD, sans changer le fichier .js, il faut ajouter un attribut html-password au HTML/SCRIPT. Un exemple est donné dans demo.html pour les attributs msg-entropie et debug.
 
-## SRI et CSP
-Conformément au standard ministériel, l'inclusion de composants .js implique la référence au hash du fichier
-
+## CSP
+Pour respecter une politique CSP réellement efficace (donc stricte et sans 'unsafe-inline' ou équivalent), l'inclusion de composants .js implique la référence au hash du fichier dans la directive correspondante.
 
 script-src: 'self' 'sha256-'
 
-Pour HIBP, il faut ajouter 
+Pour HIBP, il faut ajouter une référence au service qui fournit les hash de mots de passe fuités. Par défaut:
 connect-src: https://ssi.economie.gouv.fr
 
 Dans ce contexte, ssi.economie.gouv.fr ne sert que de proxy anonymisant vers le service haveibeenpown.com. Si vous ne souhaitez pas dépendre de ssi.economie.gouv.fr, il faut réaliser un proxy équivalent et modifier la référence dans le code source.
