@@ -5434,7 +5434,7 @@ function LastId(s) {
 // EvalMdp essaie de trouver la transformation qui minimise l'entropie.
 // Comme l'analyse est récursive, il faut une protection contre les descentes en profondeur interminables
 function EvalTmdp(mdp, profondeur) {
-    DebugLog("EvalTmdp: ", mdp, profondeur)
+    //DebugLog("EvalTmdp In: ", mdp, profondeur)
     if (mdp.length == 0) {
         return 0;
     }
@@ -5493,15 +5493,18 @@ function EvalTmdp(mdp, profondeur) {
         var residue = mdp.slice(i, l);
         var m = LastId(residue);
         var sub = mdp.slice(i,i+m);
-        var suffix = mdp.slice(i+m, l);
-        var v = EvalTmdp(prefix, profondeur+1) + Math.min(sub.length * BitsNumID, 48) + EvalTmdp(suffix, profondeur+1);
-        if ( v < r ) {
-            r = v;
-            DebugLog("Id: ", prefix, sub, suffix, r);
+        if (sub.length >= MinComponentsLength ) {
+            var suffix = mdp.slice(i+m, l);
+            var v = EvalTmdp(prefix, profondeur+1) + Math.min(sub.length * BitsNumID, 48) + EvalTmdp(suffix, profondeur+1);
+            if ( v < r ) {
+                r = v;
+                DebugLog("Id: ", prefix, sub, suffix, r);
+            }
         }
     } 
 
     // il ne faut pas oublier de prendre en compte les modifs
+    //DebugLog("EvalTmdp Out: ", mdp, profondeur, r + Delta(mdp,lower) );
     return r + Delta(mdp,lower);
 }
 
@@ -5551,9 +5554,9 @@ function SetScore(s) {
 }
 
 function ScoreTmdp() {
-    DebugLog("ScoreTmdp");
     document.getElementById("hibp").checked = false;
     var mdp = document.getElementById(HTML_PASSWORD).value;
+    DebugLog("ScoreTmdp", mdp);
     var s = "", bits = 0, score = "";
 
     bits = Math.round(EvalTmdp(mdp, 0));
