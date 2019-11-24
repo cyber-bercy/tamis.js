@@ -4,20 +4,33 @@
 'use strict;'
 
 // les ID des éléments HTML/CSS utilisés comme input ou output
-const HTML_PASSWORD = "password"
-const HTML_COMPLEXITE = "progress"
-const HTML_MESSAGE  = "tmdp"
-const HTML_SCORE    = "strength"
-const CSS_LABEL     = "c-label"
-const MSG_ENTROPIE  = false
+var HTML_PASSWORD = "password"
+var HTML_COMPLEXITE = "progress"
+var HTML_MESSAGE  = "tmdp"
+var HTML_SCORE    = "strength"
+var CSS_LABEL     = "c-label"
+var MSG_ENTROPIE  = false
 
 // utilitaire pour débogage
-const DEBUG         = false
+var DEBUG         = false
 
+function GetEnvAttributes() {
+    js = document.getElementById("tmdp-js");
+    if (js) {
+        HTML_PASSWORD = js.getAttribute("html-password") || HTML_PASSWORD;
+        HTML_COMPLEXITE = js.getAttribute("html-complexite") || HTML_COMPLEXITE;
+        HTML_MESSAGE = js.getAttribute("html-message") || HTML_MESSAGE;
+        HTML_SCORE = js.getAttribute("html-score") || HTML_SCORE;
+        CSS_LABEL = js.getAttribute("css-label") || CSS_LABEL;
+        MSG_ENTROPIE = js.getAttribute("msg-entropie") || MSG_ENTROPIE;
+        DEBUG = js.getAttribute("debug") || DEBUG;
+    }
+
+}
 
 // évidemment IE bug sur syntaxe avancée
-//function DebugLog(...msg) {
-function DebugLog(msg) {
+function DebugLog(...msg) {
+//function DebugLog(msg) {
     if (DEBUG) {
         console.log(msg);
     }
@@ -4591,17 +4604,6 @@ const CommonWords ={
 
 }
 
-// pour les moteurs Javascript comme IE qui ne connaissent pas Math.log2
-Math.log2 = Math.log2 || function(x){return Math.log(x)*Math.LOG2E;};
-
-const MinComponentsLength = 4
-const BitsCommonWords = Math.log2(Object.keys(CommonWords).length);
-const BitsChar = Math.log2(26);
-const BitsNum = Math.log2(10);
-const BitsAlt = Math.log2(38);
-const BitsCharset = Math.log2(74);
-const BitsNumID = Math.log2(10);
-
 const Frequences = [
     0.23653710453418866,
     0.04577693541332556,
@@ -5335,6 +5337,19 @@ const Frequences = [
   ]
 
 
+// pour les moteurs Javascript comme IE qui ne connaissent pas Math.log2
+Math.log2 = Math.log2 || function(x){return Math.log(x)*Math.LOG2E;};
+
+const MinComponentsLength = 4
+const MaxComponentsLength = 12
+const BitsCommonWords = Math.log2(Object.keys(CommonWords).length);
+const BitsChar = Math.log2(26);
+const BitsNum = Math.log2(10);
+const BitsAlt = Math.log2(38);
+const BitsCharset = Math.log2(74);
+const BitsNumID = Math.log2(10);
+const BitsRepeatedChar = 1.0;
+
 function GetFrequencesIndex(c)
 {
     c = c.charAt(0).toLowerCase();
@@ -5370,15 +5385,25 @@ function Delta(s1, s2){
     for (i=0; i < l; i++) {
         if (s1[i] != s2[i]) {
             delta++;
-            DebugLog("Delta: ", s1[i], delta);
         }
     }
     return delta;
 }
 
+function Deduplicate(s) {
+    var l = s.length;
+    if ( l<2 ) { return s; }
+    var dd = s[0];
+    for (i=1; i < l; i++) {
+        if (s[i] != s[i-1]) {
+            dd = dd.concat(s[i]);
+        }
+    }
+    return dd;
+}
+
 function CheckCommonWords(s) {
     if (CommonWords[s]) {
-        DebugLog("CheckCommonWords: ", s);
         return true;
     }
     return false;
@@ -5393,7 +5418,6 @@ function FirstNum(s) {
     if ( i == s.length) {
         return -1;
     }
-    //DebugLog("FirstNum: ", s, i);
     return i;
 }
 
@@ -5403,7 +5427,6 @@ function LastId(s) {
     while ( i<l && IdCharset.indexOf(s[i])>=0 ) {
         i++;
     }
-    //DebugLog("LastId: ", s, i);
     return i; 
 }
 
@@ -5416,6 +5439,11 @@ function EvalTmdp(mdp, profondeur) {
         return 0;
     }
 
+    var dedup = Deduplicate(mdp);
+    if ( mdp.length - dedup.length > 2) {
+        DebugLog("Dedup: ", mdp, dedup)
+        return EvalTmdp(dedup, profondeur + 1) + (mdp.length - dedup.length) * BitsRepeatedChar ;
+    }
     var lower = FrenchLowerCase(mdp);
     var r = FreqEvalMdp(lower); 
 
@@ -5427,24 +5455,34 @@ function EvalTmdp(mdp, profondeur) {
     if ( toogled != lower ) {
         var v = EvalTmdp(toogled, profondeur+1) + Delta(toogled, lower);
         if ( v < r ) {
-            r = v;
             DebugLog("better toogled: ", toogled);
+            r = v;
         }
     }
 
-    var l = lower.length;
-    // on commence en recherchant les plus grands composants !
-    for (var m=l-1; m >= MinComponentsLength; m--){
+    var l = Math.min(lower.length, MaxComponentsLength);
+    // on commence en recherchant les plus grands composants
+    for (var m=l; m >= MinComponentsLength; m--) {
+        // les prefix et suffix peuvent être vides
         for (var i=0; i+m <= l; i++) {
             var prefix = lower.slice(0,i);
             var sub = lower.slice(i, i+m)
             var suffix = lower.slice(i+m, l);
+            // presence dans dictionnaire
             if (CheckCommonWords(sub)) {
                 var v = EvalTmdp(prefix, profondeur+1) + BitsCommonWords + EvalTmdp(suffix, profondeur+1);
                 if ( v < r ) {
-                    r = v;
                     DebugLog("CommonWord: ", prefix, sub, suffix, r);
+                    r = v;
                 }
+            }
+            // auto-similarité
+            if (prefix.indexOf(sub)>=0 || suffix.indexOf(sub)>=0 ) {
+                var v = EvalTmdp(prefix, profondeur+1) + BitsCommonWords + EvalTmdp(suffix, profondeur+1);
+                if ( v < r ) {
+                    DebugLog("Autosimilarity: ", prefix, sub, suffix, r);
+                    r = v;
+                }                
             }
         }
     }
@@ -5467,7 +5505,7 @@ function EvalTmdp(mdp, profondeur) {
     return r + Delta(mdp,lower);
 }
 
-// RawEvalMdp est une évaluation brute et moyenne de l'entropie
+// FreqEvalMdp est une évaluation brute et moyenne de l'entropie
 function FreqEvalMdp (mdp) {
     if (mdp.length == 0) {
         return 0;
@@ -5494,15 +5532,22 @@ function SetText(s) {
 
 function SetComplexity(s, color) {
     var e = document.getElementById(HTML_COMPLEXITE);
+    if (!e) { return; }
     e.style.width = Math.min(s, 100)+"%";
     e.style.background = color;
 }
 
 function SetScore(s) {
     var e = document.getElementById(HTML_SCORE); 
-    if (!e || e.innerHTML == s) { return; }
-    e.innerHTML = s;
-    e.className = CSS_LABEL + " " + CSS_LABEL + "-" + s;  
+    if (!e) { return; }
+    //Debuglog(e.nodeName)
+    switch (e.nodeName) {
+        case "DIV":
+            e.innerHTML = s;
+            e.className = CSS_LABEL + " " + CSS_LABEL + "-" + s; 
+        case "INPUT":
+            e.value = s;
+    }
 }
 
 function ScoreTmdp() {
@@ -5574,4 +5619,5 @@ function StartTmdp () {
     SetText("");
 }
 
+GetEnvAttributes();
 window.addEventListener("load", StartTmdp, false);
