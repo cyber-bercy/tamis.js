@@ -5334,7 +5334,7 @@ const Frequences = [
     0.0008257763522379356,
     0.03918821985712203,
     0.06015454147834961
-  ]
+]
 
 
 // pour les moteurs Javascript comme IE qui ne connaissent pas Math.log2
