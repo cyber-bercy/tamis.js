@@ -1,7 +1,7 @@
 // hibp.js is a Javascript library, open sourced 
 // under the CECILL B license http://www.cecill.info/licences.fr.html
 
-'use strict;'
+"use strict";
 
 const HTML_HIBP = "hibp";
 
@@ -53,7 +53,7 @@ function ScoreHIBP() {
 
 
 async function StartHIBP () {
-    e = document.getElementById(HTML_HIBP)
+    var e = document.getElementById(HTML_HIBP)
     if (!e) {
         return;
     }

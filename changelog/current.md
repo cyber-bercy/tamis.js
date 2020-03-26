@@ -1,12 +1,12 @@
 # Développements à venir
 
 UI
-[ ] paramètre minlength, en nombre de char
-[ ] paramètre minstrength, en bits
-[ ] paramètre N types parmi MAJ / min / chiffres / spéciaux
-[ ] option pilotage activation / désactivation du bouton (ID) formulaire 
+[X] paramètre MIN_LENGTH, en nombre de char
+[X] paramètre MIN_ENTROPIE, en bits
+[X] paramètre N types parmi MAJ / min / chiffres / spéciaux
+[X] option pilotage activation / désactivation du bouton (ID) formulaire 
 [ ] externalisation des messages
-[ ] vérifier état vierge et retour
+[X] vérifier état vierge et retour
 
 
 HIBP
@@ -15,3 +15,6 @@ HIBP
 [ ] relai HIBP avec CORS
 [ ] test dispo service pour éviter de bloquer
 [ ] externalisation des messages
+
+Nettoyage
+[X] passage de onkeyup à oninput https://mathiasbynens.be/notes/oninput

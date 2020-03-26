@@ -34,10 +34,10 @@ tmdp.js utilise les variables d'environnement suivantes:
 - HTML_MESSAGE  ("tmdp") : id du DIV utilisé pour insérer le message d'accompagnement.
 - HTML_SCORE    ("strength") :  id du DIV utilisé pour l'évaluation A à E
 - CSS_LABEL     ("c-label") : class CSS de base pour colorer les éléments ; les classes à définir sont (avec la valeur par défaut) sont "c-label" "c-label-A" etc.
-- MSG_ENTROPIE  (false) : remplace le message d'accompagnement par une évaluation chiffrée de l'entropie.
+- MSG_ENTROPIE  (false) : remplace le message d'accompagnement par une évaluation chiffrée de l'entropie si valeur positionnée à "true"
 
 hibp.js n'est pas paramétrable et l'intégration passe par le respect de convention :
-- "hibp" : id de la CHECKBOX (masquée initialement pour que la détection des fonctions navigateurs ne propose la fonction que si elle est possible)
+- "hibp" : id de la CHECKBOX (masquée initialement pour que la détection des fonctions navigateurs ne propose la fonction que si elle est possible ; on suppose que le navigateur est 'suffisament récent' pour qu'il comprenne le CSS visibility).
 
 Pour changer les valeurs par défaut, par exemple HTML_PASSWORD, sans changer le fichier .js, il faut ajouter un attribut html-password au HTML/SCRIPT. Un exemple est donné dans demo.html pour les attributs msg-entropie et debug.
 

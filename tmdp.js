@@ -1,29 +1,47 @@
 // tmdp.js is a Javascript library, open sourced 
 // under the CECILL B license http://www.cecill.info/licences.fr.html
 
-'use strict;'
+"use strict";
 
 // les ID des éléments HTML/CSS utilisés comme input ou output
-var HTML_PASSWORD = "password"
-var HTML_COMPLEXITE = "progress"
-var HTML_MESSAGE  = "tmdp"
-var HTML_SCORE    = "strength"
-var CSS_LABEL     = "c-label"
-var MSG_ENTROPIE  = false
+var HTML_PASSWORD   = "password";
+var HTML_COMPLEXITE = "progress";
+var HTML_MESSAGE    = "tmdp";
+var HTML_SCORE      = "strength";
+var HTML_ACTIVE     = "submit";
+var CSS_LABEL       = "c-label";
+
+var MIN_LONGUEUR    = 10;
+var MIN_CHARCLASS   = 3;
+var MIN_ENTROPIE    = 48;
+
+var MSG_LABEL_A     = "FORT : conserver bien votre mot de passe parce que vous ne pourrez probablement pas le retrouver de mémoire.";
+var MSG_LABEL_B     = "SOLIDE : les attaques par dictionnaires ne réussiront pas ; attention seulement au réemploi.";
+var MSG_LABEL_C     = "MOYEN : suffisant pour détourner des crackeurs de mots de passe amateurs.";
+var MSG_LABEL_D     = "FAIBLE : suffisant en l'absence d'enjeux (mot de passe local mais pas réseau, ou si le système distant est super pro !)";
+var MSG_LABEL_E     = "ALERTE : faible au point qu'il a de grande chance d'être découvert par une attaque en ligne";
+var MSG_LABEL_N     = "-";
+var MSG_PREVISIBLE  = "Mot de passe trop prévisible";
+var MSG_LONGUEUR    = "Mot de passe trop court";
+var MSG_CHARCLASS   = "Manque des types de charactères min / MAJ / num / spéciaux";
+var MSG_ENTROPIE    = false;
+
+
 
 // utilitaire pour débogage
-var DEBUG         = false
+var DEBUG         = false;
 
 function GetEnvAttributes() {
-    js = document.getElementById("tmdp-js");
+    var js = document.getElementById("tmdp-js");
     if (js) {
         HTML_PASSWORD = js.getAttribute("html-password") || HTML_PASSWORD;
         HTML_COMPLEXITE = js.getAttribute("html-complexite") || HTML_COMPLEXITE;
         HTML_MESSAGE = js.getAttribute("html-message") || HTML_MESSAGE;
         HTML_SCORE = js.getAttribute("html-score") || HTML_SCORE;
         CSS_LABEL = js.getAttribute("css-label") || CSS_LABEL;
-        MSG_ENTROPIE = js.getAttribute("msg-entropie") || MSG_ENTROPIE;
-        DEBUG = js.getAttribute("debug") || DEBUG;
+        MSG_ENTROPIE = (js.getAttribute("msg-entropie") == "true") || MSG_ENTROPIE;
+        DEBUG = (js.getAttribute("debug") == "true") || DEBUG;
+        DebugLog("Env", MSG_ENTROPIE);
     }
 
 }
@@ -5352,7 +5370,7 @@ const BitsRepeatedChar = 1.0;
 
 function GetFrequencesIndex(c)
 {
-    c = c.charAt(0).toLowerCase();
+    var c = c.charAt(0).toLowerCase();
     if (c < 'a' || c > 'z')
     {
     return 0;
@@ -5382,7 +5400,7 @@ function Toogle(s) {
 function Delta(s1, s2){
     var l = s1.length, delta = 0;
    
-    for (i=0; i < l; i++) {
+    for (var i=0; i < l; i++) {
         if (s1[i] != s2[i]) {
             delta++;
         }
@@ -5394,7 +5412,7 @@ function Deduplicate(s) {
     var l = s.length;
     if ( l<2 ) { return s; }
     var dd = s[0];
-    for (i=1; i < l; i++) {
+    for (var i=1; i < l; i++) {
         if (s[i] != s[i-1]) {
             dd = dd.concat(s[i]);
         }
@@ -5412,7 +5430,7 @@ function CheckCommonWords(s) {
 const NumCharset = "0123456789";
 function FirstNum(s) {
     var i=0, l = s.length;
-    while ( i<l && NumCharset.indexOf(s[i])<0 ) {
+    while (i<l && NumCharset.indexOf(s[i])<0 ) {
         i++;
     }
     if ( i == s.length) {
@@ -5424,7 +5442,7 @@ function FirstNum(s) {
 const IdCharset = "0123456789.-/: ";
 function LastId(s) {
     var i=0, l = s.length;
-    while ( i<l && IdCharset.indexOf(s[i])>=0 ) {
+    while (i<l && IdCharset.indexOf(s[i])>=0 ) {
         i++;
     }
     return i; 
@@ -5434,7 +5452,7 @@ function LastId(s) {
 // EvalMdp essaie de trouver la transformation qui minimise l'entropie.
 // Comme l'analyse est récursive, il faut une protection contre les descentes en profondeur interminables
 function EvalTmdp(mdp, profondeur) {
-    //DebugLog("EvalTmdp In: ", mdp, profondeur)
+    DebugLog("EvalTmdp In: ", mdp, profondeur)
     if (mdp.length == 0) {
         return 0;
     }
@@ -5460,14 +5478,14 @@ function EvalTmdp(mdp, profondeur) {
         }
     }
 
-    var l = Math.min(lower.length, MaxComponentsLength);
+    var longueur = lower.length
     // on commence en recherchant les plus grands composants
-    for (var m=l; m >= MinComponentsLength; m--) {
+    for (var m=Math.min(MaxComponentsLength, longueur); m >= MinComponentsLength; m--) {
         // les prefix et suffix peuvent être vides
-        for (var i=0; i+m <= l; i++) {
+        for (var i=0; i+m <= longueur; i++) {
             var prefix = lower.slice(0,i);
             var sub = lower.slice(i, i+m)
-            var suffix = lower.slice(i+m, l);
+            var suffix = lower.slice(i+m, longueur);
             // presence dans dictionnaire
             if (CheckCommonWords(sub)) {
                 var v = EvalTmdp(prefix, profondeur+1) + BitsCommonWords + EvalTmdp(suffix, profondeur+1);
@@ -5477,7 +5495,7 @@ function EvalTmdp(mdp, profondeur) {
                 }
             }
             // auto-similarité
-            if (prefix.indexOf(sub)>=0 || suffix.indexOf(sub)>=0 ) {
+            if (suffix.indexOf(sub)>=0 ) {
                 var v = EvalTmdp(prefix, profondeur+1) + BitsCommonWords + EvalTmdp(suffix, profondeur+1);
                 if ( v < r ) {
                     DebugLog("Autosimilarity: ", prefix, sub, suffix, r);
@@ -5490,11 +5508,11 @@ function EvalTmdp(mdp, profondeur) {
     var i = FirstNum(mdp);
     if (i >= 0) {
         var prefix = mdp.slice(0,i);
-        var residue = mdp.slice(i, l);
+        var residue = mdp.slice(i, longueur);
         var m = LastId(residue);
         var sub = mdp.slice(i,i+m);
         if (sub.length >= MinComponentsLength ) {
-            var suffix = mdp.slice(i+m, l);
+            var suffix = mdp.slice(i+m, longueur);
             var v = EvalTmdp(prefix, profondeur+1) + Math.min(sub.length * BitsNumID, 48) + EvalTmdp(suffix, profondeur+1);
             if ( v < r ) {
                 r = v;
@@ -5517,7 +5535,7 @@ function FreqEvalMdp (mdp) {
     var aidx = GetFrequencesIndex(mdp.charAt(0));
     for (var b = 1; b < mdp.length; b ++)
     {
-        var c = 0 ; bidx = GetFrequencesIndex(mdp.charAt(b));
+        var c = 0 ; var bidx = GetFrequencesIndex(mdp.charAt(b));
         //DebugLog("bidx: ", bidx);
         c = 1.0 - Frequences[aidx * 27 + bidx];
         bits += BitsCharset * c * c; 
@@ -5556,6 +5574,7 @@ function SetScore(s) {
 function ScoreTmdp() {
     document.getElementById("hibp").checked = false;
     var mdp = document.getElementById(HTML_PASSWORD).value;
+
     DebugLog("ScoreTmdp", mdp);
     var s = "", bits = 0, score = "";
 
@@ -5574,28 +5593,52 @@ function ScoreTmdp() {
     }
 
     SetComplexity(bits, GetColorFromScore(score));
+
+    var ViolationPolitiqueMdp = false;
+    DebugLog("Politique MdP", mdp)
+    if (bits < MIN_ENTROPIE && MIN_ENTROPIE > 0) {
+        ViolationPolitiqueMdp = true;      
+        SetText(MSG_PREVISIBLE);
+        score = "-";
+    }
+    if (CharClass(mdp) < MIN_CHARCLASS && MIN_CHARCLASS > 0) {
+        ViolationPolitiqueMdp = true;  ;
+        SetText(MSG_CHARCLASS);
+        score = "-";
+    }
+    if ( (mdp.length < MIN_LONGUEUR) && (MIN_LONGUEUR > 0) ) {
+        ViolationPolitiqueMdp = true;  
+        SetText(MSG_LONGUEUR);
+        score = "-";
+    }
+
+    ActiverBouton(!ViolationPolitiqueMdp);
+
     SetScore(score);
-    if (MSG_ENTROPIE) {
-        SetText("Entropie estimée&nbsp;: " + bits + " bits");
-    } else {
+
+    if ( !ViolationPolitiqueMdp ) {
         SetText(GetMessageFromScore(score));
+    }
+    if ( MSG_ENTROPIE ) {
+        SetText("Entropie estimée&nbsp;: " + bits + " bits");
+        //console.log(mdp, bits)
     }
 }
 
 function GetMessageFromScore(score) {
     switch (score) {
         case "A":
-            return "FORT : conserver bien votre mot de passe parce que vous ne pourrez probablement pas le retrouver de mémoire.";
+            return MSG_LABEL_A;
         case "B":
-            return "SOLIDE : les attaques par dictionnaires ne réussiront pas ; attention seulement au réemploi.";
+            return MSG_LABEL_B;
         case "C":
-            return "MOYEN : suffisant pour détourner des crackeurs de mots de passe amateurs.";
+            return MSG_LABEL_C;
         case "D":
-            return "FAIBLE : suffisant en l'absence d'enjeux (mot de passe local mais pas réseau, ou si le système distant est super pro !)";
+            return MSG_LABEL_D;
         case "E":
-            return "ALERTE : faible au point qu'il a de grande chance d'être découvert par une attaque en ligne";
+            return MSG_LABEL_E;
         default:
-            return "-";
+            return MSG_LABEL_N;
     }
 }
 
@@ -5616,10 +5659,40 @@ function GetColorFromScore(score) {
     }
 }
 
+function CharClass(s) {
+    var nclass = 0;
+    if ( /[0-9]/.test(s) ) {
+        DebugLog("Num");
+        nclass = nclass +1;
+        s = s.replace(/[0-9]/g, "")
+    }
+    if ( /[a-z]/.test(s) ) {
+        DebugLog("min");
+        nclass = nclass + 1;
+        s = s.replace(/[a-z]/g, "")
+    }
+    if ( /[A-Z]/.test(s) ) {
+        DebugLog("MAJ");
+        nclass = nclass +1;
+        s = s.replace(/[A-Z]/g, "")
+    }
+    s = s.replace(/ /g, "")
+    if (s.length > 0) {
+        DebugLog("SPECIAUX");
+        nclass = nclass +1;      
+    }
+    return nclass;
+}
+
+function ActiverBouton(b) {
+    var e = document.getElementById(HTML_ACTIVE);
+    if (!e) { return; }
+    e.disabled = !b;
+}
 
 function StartTmdp () {
-    document.getElementById(HTML_PASSWORD).addEventListener("keyup", ScoreTmdp, false);
-    SetText("");
+    document.getElementById(HTML_PASSWORD).addEventListener("input", ScoreTmdp, false);
+    SetText("-");
 }
 
 GetEnvAttributes();
