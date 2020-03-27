@@ -9,6 +9,7 @@ var HTML_COMPLEXITE = "progress";
 var HTML_MESSAGE    = "tmdp";
 var HTML_SCORE      = "strength";
 var HTML_ACTIVE     = "submit";
+var HTML_HIBP       = "hibp";
 var CSS_LABEL       = "c-label";
 
 var MIN_LONGUEUR    = 10;
@@ -25,8 +26,6 @@ var MSG_PREVISIBLE  = "Mot de passe trop prévisible";
 var MSG_LONGUEUR    = "Mot de passe trop court";
 var MSG_CHARCLASS   = "Manque des types de charactères min / MAJ / num / spéciaux";
 var MSG_ENTROPIE    = false;
-
-
 
 // utilitaire pour débogage
 var DEBUG         = false;
@@ -5427,8 +5426,8 @@ function CheckCommonWords(s) {
     return false;
 }
 
-const NumCharset = "0123456789";
 function FirstNum(s) {
+    const NumCharset = "0123456789";
     var i=0, l = s.length;
     while (i<l && NumCharset.indexOf(s[i])<0 ) {
         i++;
@@ -5439,8 +5438,8 @@ function FirstNum(s) {
     return i;
 }
 
-const IdCharset = "0123456789.-/: ";
 function LastId(s) {
+    const IdCharset = "0123456789.-/: ";
     var i=0, l = s.length;
     while (i<l && IdCharset.indexOf(s[i])>=0 ) {
         i++;
@@ -5551,7 +5550,7 @@ function SetText(s) {
     e.innerHTML = s;
 }
 
-function SetComplexity(s, color) {
+function SetComplexite(s, color) {
     var e = document.getElementById(HTML_COMPLEXITE);
     if (!e) { return; }
     e.style.width = Math.min(s, 100)+"%";
@@ -5572,7 +5571,8 @@ function SetScore(s) {
 }
 
 function ScoreTmdp() {
-    document.getElementById("hibp").checked = false;
+    var e = document.getElementById(HTML_HIBP);
+    if (e) { e.checked = false; }
     var mdp = document.getElementById(HTML_PASSWORD).value;
 
     DebugLog("ScoreTmdp", mdp);
@@ -5592,7 +5592,7 @@ function ScoreTmdp() {
         score = "A";
     }
 
-    SetComplexity(bits, GetColorFromScore(score));
+    SetComplexite(bits, GetColorFromScore(score));
 
     var ViolationPolitiqueMdp = false;
     DebugLog("Politique MdP", mdp)
@@ -5621,7 +5621,6 @@ function ScoreTmdp() {
     }
     if ( MSG_ENTROPIE ) {
         SetText("Entropie estimée&nbsp;: " + bits + " bits");
-        //console.log(mdp, bits)
     }
 }
 

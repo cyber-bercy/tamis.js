@@ -3,7 +3,8 @@
 
 "use strict";
 
-const HTML_HIBP = "hibp";
+var     HTML_HIBP   = "hibp";
+const   URL         = "https://ssi.economie.gouv.fr/hibp/"
 
 async function sha1(s) {
     var buffer = new TextEncoder("utf-8").encode(s);
@@ -29,7 +30,7 @@ async function HaveIBeenPwned(s) {
     DebugLog(hash16);
 
     let range = hash16.slice(0, 5)
-    let response = await fetch(`https://ssi.economie.gouv.fr/hibp/${range}`)
+    let response = await fetch(URL + range)
     let body = await response.text()
     DebugLog(body);
 
@@ -41,6 +42,7 @@ async function HaveIBeenPwned(s) {
 function ScoreHIBP() {
     DebugLog("ScoreHIBP");
     var mdp = document.getElementById(HTML_PASSWORD).value;
+    if (!mdp) { return; }
     HaveIBeenPwned(mdp)
     .then(pwned => {
         if (pwned) {
@@ -54,13 +56,10 @@ function ScoreHIBP() {
 
 async function StartHIBP () {
     var e = document.getElementById(HTML_HIBP)
-    if (!e) {
-        return;
-    }
+    if (!e) { return; }
     let h = await sha1("test");
     if (h && (h.byteLength == 20) ) {
         e.addEventListener("click", ScoreHIBP, false);
-        console.log("change visible")
         e.parentNode.style.visibility = "visible";
     }
 }
