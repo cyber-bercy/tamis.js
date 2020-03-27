@@ -48,6 +48,7 @@ function ScoreHIBP() {
         if (pwned) {
             SetText("ALERTE : mot de passe déjà éventé !");
             SetScore("E");
+            ActiverBouton(false);
             DebugLog("HIBP!");
         }
     });

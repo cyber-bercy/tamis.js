@@ -36,6 +36,12 @@ tmdp.js utilise les variables d'environnement suivantes:
 - CSS_LABEL     ("c-label") : class CSS de base pour colorer les éléments ; les classes à définir sont (avec la valeur par défaut) sont "c-label" "c-label-A" etc.
 - MSG_ENTROPIE  (false) : remplace le message d'accompagnement par une évaluation chiffrée de l'entropie si valeur positionnée à "true"
 
+tmdp.js peut aussi vérifier côté client le respect d'une politique de mots de passe.
+- MIN_LONGUEUR : longueur minimale
+- MIN_CHARCLASS : nombre de classes dans le mots de passe parmi a-z / A-Z / 0-9 et autres (hors espace)
+- MIN_ENTROPIE : imprévisibilité du mot de passe
+Un critère positionné à 0 signifie qu'il n'est pas validé.
+
 hibp.js n'est pas paramétrable et l'intégration passe par le respect de convention :
 - "hibp" : id de la CHECKBOX (masquée initialement pour que la détection des fonctions navigateurs ne propose la fonction que si elle est possible ; on suppose que le navigateur est 'suffisament récent' pour qu'il comprenne le CSS visibility).
 
@@ -44,9 +50,11 @@ Pour changer les valeurs par défaut, par exemple HTML_PASSWORD, sans changer le
 ## CSP
 Pour respecter une politique CSP réellement efficace (donc stricte et sans 'unsafe-inline' ou équivalent), l'inclusion de composants .js implique la référence au hash du fichier dans la directive correspondante.
 
-script-src: 'self' 'sha256-'
+` script-src: 'self' `
+ou
+` script-src: 'sha256-' `
 
 Pour HIBP, il faut ajouter une référence au service qui fournit les hash de mots de passe fuités. Par défaut:
-connect-src: https://ssi.economie.gouv.fr
+` connect-src: https://ssi.economie.gouv.fr `
 
-Dans ce contexte, ssi.economie.gouv.fr ne sert que de proxy anonymisant vers le service haveibeenpown.com. Si vous ne souhaitez pas dépendre de ssi.economie.gouv.fr, il faut réaliser un proxy équivalent et modifier la référence dans le code source.
+Dans ce contexte, ssi.economie.gouv.fr ne sert que de proxy anonymisant vers le service haveibeenpown.com. Si vous ne souhaitez pas dépendre de ssi.economie.gouv.fr, il faut réaliser un proxy équivalent et modifier la référence dans le paramètre au début de hibp.js

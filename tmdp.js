@@ -25,9 +25,9 @@ var MSG_LABEL_N     = "-";
 var MSG_PREVISIBLE  = "Mot de passe trop prévisible";
 var MSG_LONGUEUR    = "Mot de passe trop court";
 var MSG_CHARCLASS   = "Manque des types de charactères min / MAJ / num / spéciaux";
-var MSG_ENTROPIE    = false;
 
 // utilitaire pour débogage
+var MSG_ENTROPIE    = false;
 var DEBUG         = false;
 
 function GetEnvAttributes() {
@@ -38,6 +38,10 @@ function GetEnvAttributes() {
         HTML_MESSAGE = js.getAttribute("html-message") || HTML_MESSAGE;
         HTML_SCORE = js.getAttribute("html-score") || HTML_SCORE;
         CSS_LABEL = js.getAttribute("css-label") || CSS_LABEL;
+
+        MIN_LONGUEUR = js.getAttribute("min-longueur") || MIN_LONGUEUR;
+        MIN_CHARCLASS = js.getAttribute("min-charclass") || MIN_CHARCLASS;
+        MIN_ENTROPIE = js.getAttribute("min-entropie") || MIN_ENTROPIE;
         MSG_ENTROPIE = (js.getAttribute("msg-entropie") == "true") || MSG_ENTROPIE;
         DEBUG = (js.getAttribute("debug") == "true") || DEBUG;
         DebugLog("Env", MSG_ENTROPIE);
