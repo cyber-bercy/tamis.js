@@ -15,7 +15,7 @@
 - [X] traiter l'absence de checkbox HIBP, de l'absence d'inclusion de hibp.js
 - [ ] amélioration API backend
 - [ ] relai HIBP avec CORS
-- [N] test dispo service pour éviter de bloquer : il semble que pas nécessaire
+- [X] test dispo service pour éviter de bloquer : il semble que pas nécessaire
 - [ ] externalisation des messages
 
 ## Nettoyage
